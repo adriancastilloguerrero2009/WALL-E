@@ -12,7 +12,7 @@ const OLLAMA_MODEL = "qwen2.5:3b"; // change to "llama3.2" or "qwen2.5:3b" if pr
 
 //This is just the MY path to where it's all installed, you can change it to wherever you want
 const WHISPER_BIN   = "C:\\whisper\\release\\whisper-cli.exe";
-const WHISPER_MODEL = "C:\\whisper\\release\\models\\ggml-base.en.bin";
+const WHISPER_MODEL = "C:\\whisper\\release\\models\\ggml-base.bin";
 
 //Note: I use the "base" model for faster transcriptions, but you can use other ones depending on your RAM
 
