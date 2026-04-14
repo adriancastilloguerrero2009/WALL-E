@@ -49,7 +49,7 @@ async function transcribeAudio(audioBuffer: Buffer, filename: string): Promise<s
     const result = spawnSync(WHISPER_BIN, [
       "-m", WHISPER_MODEL,
       "-f", wavPath,
-      "-l", "auto",
+      "-l", "es",             // set language to Spanish (change if needed)
       "-nt",            // no timestamps in output
     ]);
 
