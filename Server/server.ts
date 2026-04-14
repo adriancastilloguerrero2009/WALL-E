@@ -88,7 +88,6 @@ async function* streamLLM(prompt: string): AsyncGenerator<string> {
   });
 
   //You have to run ollama first inside your terminal once you have everything setup, run "ollama serve" and LEAVE THE TERMINAL OPEN
-  //Note to self: I should've put this in the README or just made a bash script to run it for you, you lazy bum.
   
   if (!res.ok || !res.body) {
     throw new Error(`Ollama error ${res.status} — make sure Ollama is installed and running`);
