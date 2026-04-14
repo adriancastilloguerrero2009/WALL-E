@@ -2,7 +2,7 @@
 import { serve } from "bun";
 import { writeFileSync, unlinkSync, existsSync } from "fs";
 import { spawnSync } from "child_process";
-//The import names are so weird though, "child process", I had to google how to kill child in ts and it sounds so wrong 😭
+
 
 // ─── Config ────────────────────────────────────────────────────────────────
 
