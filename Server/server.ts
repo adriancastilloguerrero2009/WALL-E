@@ -1,15 +1,20 @@
+//  WALL-E: A local voice assistant powered by Ollama and Whisper (Made by Alexander "RandomDude")
 import { serve } from "bun";
 import { writeFileSync, unlinkSync, existsSync } from "fs";
 import { spawnSync } from "child_process";
+//The import names are so weird though, "child process", I had to google how to kill child in ts and it sounds so wrong 😭
 
 // ─── Config ────────────────────────────────────────────────────────────────
 
 const PORT         = 3000;
 const OLLAMA_URL   = "http://localhost:11434/api/generate";
-const OLLAMA_MODEL = "qwen2.5:3b"; // change to "llama3.2" or "qwen2.5:3b" if preferred
+const OLLAMA_MODEL = "qwen2.5:3b"; // change to "llama3.2" or "qwen2.5:3b" if preferred... although I think I'll import more models 
 
+//This is just the MY path to where it's all installed, you can change it to wherever you want
 const WHISPER_BIN   = "C:\\whisper\\release\\whisper-cli.exe";
 const WHISPER_MODEL = "C:\\whisper\\release\\models\\ggml-base.en.bin";
+
+//Note: I use the "base" model for faster transcriptions, but you can use other ones depending on your RAM
 
 // ─── Audio conversion (webm/mp3/etc → 16-bit WAV) ──────────────────────────
 
@@ -25,6 +30,7 @@ function convertToWav(inputPath: string): string {
     outputPath,
   ]);
 
+  //Throws error if ffmpeg fails, which helps with debugging
   if (result.status !== 0) {
     throw new Error(`ffmpeg failed: ${result.stderr?.toString()}`);
   }
@@ -32,15 +38,18 @@ function convertToWav(inputPath: string): string {
   return outputPath;
 }
 
-// ─── Speech to Text ────────────────────────────────────────────────────────
 
+// ─── Speech to Text ────────────────────────────────────────────────────────
+//Note: I set the language to Spanish ("-l", "es") since I speak Spanish, but you can change it
+//Another note: this is for the transcription part with whisper.cpp, the model you use for ollama might not understand your languages, so configure that first
 async function transcribeAudio(audioBuffer: Buffer, filename: string): Promise<string> {
-  const ext      = filename.split(".").pop()?.toLowerCase() ?? "webm";
+  const ext = filename.split(".").pop()?.toLowerCase() ?? "webm";
   const tempPath = `./temp_${Date.now()}.${ext}`;
-  let   wavPath  = tempPath;
+  let wavPath = tempPath;
 
   writeFileSync(tempPath, audioBuffer);
 
+  //tries to convert to .wav
   try {
     if (ext !== "wav") {
       wavPath = convertToWav(tempPath);
@@ -50,9 +59,10 @@ async function transcribeAudio(audioBuffer: Buffer, filename: string): Promise<s
       "-m", WHISPER_MODEL,
       "-f", wavPath,
       "-l", "es",             // set language to Spanish (change if needed)
-      "-nt",            // no timestamps in output
+      "-nt",            // no timestamps in output because it's annoying
     ]);
 
+    //You have failed.
     if (result.status !== 0) {
       throw new Error(`Whisper failed: ${result.stderr?.toString()}`);
     }
@@ -66,6 +76,9 @@ async function transcribeAudio(audioBuffer: Buffer, filename: string): Promise<s
 }
 
 // ─── LLM streaming ─────────────────────────────────────────────────────────
+//TLDR: It looks unprofessional to sit there waiting for the the whole response to generate so this sends the tokens as they come, which is a lot nicer.
+
+//This obviously uses an async function (which I hate using because of the syntax) but basically it makes a POST request to the Ollama API
 
 async function* streamLLM(prompt: string): AsyncGenerator<string> {
   const res = await fetch(OLLAMA_URL, {
@@ -74,6 +87,9 @@ async function* streamLLM(prompt: string): AsyncGenerator<string> {
     body: JSON.stringify({ model: OLLAMA_MODEL, prompt, stream: true }),
   });
 
+  //You have to run ollama first inside your terminal once you have everything setup, run "ollama serve" and LEAVE THE TERMINAL OPEN
+  //Note to self: I should've put this in the README or just made a bash script to run it for you, you lazy bum.
+  
   if (!res.ok || !res.body) {
     throw new Error(`Ollama error ${res.status} — make sure Ollama is installed and running`);
   }
@@ -116,6 +132,7 @@ function sse(stream: ReadableStream) {
 }
 
 // ─── Server ────────────────────────────────────────────────────────────────
+//The worst part. 
 
 const website = Bun.file("./index.html");
 
@@ -177,7 +194,10 @@ serve({
   },
 });
 
+//All that was buffers and blah blah blah I honestly don't even remember, it works, so dont touch it. I'm a college student that doesn't get paid for this I can't bother making it look pretty.
+
+
 console.log(`\n🎙  Voice pipeline running → http://localhost:${PORT}`);
-console.log(`🤖  Ollama model  : ${OLLAMA_MODEL}`);
-console.log(`📝  Whisper binary: ${WHISPER_BIN}`);
-console.log(`📦  Whisper model : ${WHISPER_MODEL}\n`);
+console.log(`(da robot)  Ollama model  : ${OLLAMA_MODEL}`);
+console.log(`(if you dont have this set up then it won't work)  Whisper binary: ${WHISPER_BIN}`);
+console.log(`Whisper model : ${WHISPER_MODEL}\n`);

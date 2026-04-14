@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Voice Pipeline</title>
+<title>The Wall-E Robot</title>
 <style>
+
+
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
 
   :root {
@@ -30,7 +32,13 @@
     padding: 2rem;
   }
 
-  .container { width: 100%; max-width: 720px; display: flex; flex-direction: column; gap: 1.5rem; }
+  .container {
+    width: 100%; 
+    max-width: 720px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 1.5rem; 
+  }
 
   header {
     display: flex;
@@ -40,24 +48,73 @@
     padding-bottom: 1rem;
   }
 
-  h1 { font-family: 'IBM Plex Mono', monospace; font-size: 1.1rem; font-weight: 600; color: var(--accent); letter-spacing: 0.05em; }
+  h1 { 
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.1rem; font-weight: 600;
+    color: var(--accent); 
+    letter-spacing: 0.05em;
+  }
 
-  .badge { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; padding: 2px 8px; border: 1px solid var(--border); border-radius: 2px; color: var(--muted); }
+  .badge { 
+    font-family: 'IBM Plex Mono', monospace; 
+    font-size: 0.65rem; 
+    padding: 2px 8px; 
+    border: 1px solid var(--border); 
+    border-radius: 2px;
+    color: var(--muted);
+  }
 
-  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+  .panel { 
+    background: var(--surface); 
+    border: 1px solid var(--border); 
+    border-radius: 6px; padding: 1.25rem; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 1rem; 
+  }
 
-  .panel-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; }
+  .panel-label { 
+    font-family: 'IBM Plex Mono', monospace; 
+    font-size: 0.65rem; 
+    letter-spacing: 0.12em; 
+    color: var(--muted); 
+    text-transform: uppercase; }
 
   .drop-zone {
     border: 1px dashed var(--border); border-radius: 4px; padding: 2rem 1.5rem;
     text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; position: relative;
   }
-  .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: rgba(126,255,160,0.04); }
-  .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-  .drop-zone .hint { font-size: 0.8rem; color: var(--muted); }
-  .drop-zone .filename { font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; color: var(--accent); margin-top: 0.4rem; }
 
-  .record-row { display: flex; gap: 0.75rem; align-items: center; }
+  .drop-zone:hover, .drop-zone.dragover { 
+    border-color: var(--accent); 
+    background: #7effa00a; 
+  }
+  .drop-zone input { 
+    position: absolute; 
+    inset: 0; 
+    opacity: 0; 
+    cursor: pointer; 
+  }
+
+  .drop-zone .hint { 
+    font-size: 0.8rem; 
+    color: var(--muted); 
+  }
+
+  .drop-zone .filename { 
+    font-family: 'IBM Plex Mono', monospace; 
+    font-size: 0.8rem; 
+    color: var(--accent); 
+    margin-top: 0.4rem;
+   }
+
+
+
+  .record-row { 
+    display: flex; 
+    gap: 0.75rem; 
+    align-items: center; 
+  }
 
   button {
     font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; font-weight: 500;
@@ -65,56 +122,131 @@
     border-radius: 4px; background: transparent; color: var(--text); cursor: pointer;
     transition: border-color 0.15s, color 0.15s, background 0.15s;
   }
-  button:hover { border-color: var(--accent); color: var(--accent); }
-  button:disabled { opacity: 0.3; cursor: default; }
-  button.primary { border-color: var(--accent); color: var(--accent); background: rgba(126,255,160,0.07); }
-  button.primary:hover { background: rgba(126,255,160,0.14); }
-  button.recording { border-color: var(--danger); color: var(--danger); background: rgba(255,107,107,0.08); animation: pulse 1s ease-in-out infinite; }
 
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+  button:hover { 
+    border-color: var(--accent); 
+    color: var(--accent); 
+  }
+
+  button:disabled { 
+    opacity: 0.3; 
+    cursor: default; 
+  }
+  
+  button.primary { 
+    border-color: var(--accent); 
+    color: var(--accent); 
+    background: #7effa012; 
+  }
+  
+  button.primary:hover { 
+    background: #7effa024; 
+  }
+  
+  button.recording { 
+    border-color: var(--danger); 
+    color: var(--danger); 
+    background: #ff6b6b12; 
+    animation: pulse 1s ease-in-out infinite; 
+  }
+
+  @keyframes pulse { 
+    0%,100%{opacity:1} 50%{opacity:0.6} 
+  }
 
   .rec-timer { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--danger); min-width: 3rem; }
 
-  .status-bar { display: flex; align-items: center; gap: 0.6rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--muted); }
-  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
-  .dot.active { background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: pulse 1.2s ease-in-out infinite; }
-  .dot.error  { background: var(--danger); }
-  .dot.done   { background: var(--accent); }
+  .status-bar { 
+    display: flex; 
+    align-items: center; 
+    gap: 0.6rem; 
+    font-family: 'IBM Plex Mono', monospace; 
+    font-size: 0.72rem; 
+    color: var(--muted); 
+  }
 
-  .output { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; line-height: 1.7; min-height: 3.5rem; color: var(--text); white-space: pre-wrap; word-break: break-word; }
-  .output.muted  { color: var(--muted); }
-  .output.accent { color: var(--accent2); }
+  .dot { 
+    width: 6px; 
+    height: 6px; 
+    border-radius: 50%; 
+    background: var(--muted); 
+    flex-shrink: 0; 
+  }
+  
+  .dot.active { 
+    background: var(--accent); 
+    box-shadow: 0 0 6px var(--accent); 
+    animation: pulse 1.2s ease-in-out infinite; 
+  }
+  
+  .dot.error  { 
+    background: var(--danger); 
+  }
+  
+  .dot.done   { 
+    background: var(--accent); 
+  }
+
+  .output { 
+    font-family: 'IBM Plex Mono', monospace; 
+    font-size: 0.78rem; 
+    line-height: 1.7; 
+    min-height: 3.5rem; 
+    color: var(--text); 
+    white-space: pre-wrap; 
+    word-break: break-word; 
+  
+}
+
+.output.muted  { color: var(--muted); }
+
+.output.accent { color: var(--accent2); }
 
   .divider { height: 1px; background: var(--border); }
+
+
+
 </style>
 </head>
 <body>
 <div class="container">
 
   <header>
-    <h1>// voice_pipeline</h1>
-    <span class="badge">localhost:3000</span>
+    <h1>// wall-e AI voice model</h1>
+    <span class="badge">localhost:3000 (I'm not paying for a domain name)</span>
   </header>
 
+
+  <!--This is the panel where all the visual information is displayed-->
+
   <div class="panel">
+
     <span class="panel-label">01 — Audio Input</span>
+
     <div class="drop-zone" id="dropZone">
       <input type="file" id="fileInput" accept="audio/*" />
       <div class="hint">drop an audio file or click to browse</div>
       <div class="filename" id="fileName"></div>
     </div>
+
+
     <div class="record-row">
       <button id="recordBtn">⏺ record mic</button>
       <span class="rec-timer" id="recTimer"></span>
       <span style="flex:1"></span>
       <button class="primary" id="submitBtn" disabled>run →</button>
     </div>
+
   </div>
+
+  <!-- Status bar for showing current state of the pipeline -->
 
   <div class="status-bar">
     <div class="dot" id="statusDot"></div>
     <span id="statusText">idle</span>
   </div>
+
+  <!-- Transcript panel (again another panel)-->
 
   <div class="panel">
     <span class="panel-label">02 — Transcript (Whisper)</span>
@@ -123,13 +255,20 @@
 
   <div class="divider"></div>
 
+  <!-- Response panel using Ollama -->
+
   <div class="panel">
     <span class="panel-label">03 — Response (Ollama)</span>
     <div class="output accent" id="llmOut">waiting for transcript...</div>
   </div>
 
 </div>
+
+
 <script>
+
+//DOM script to make sure server.ts works properly with the file inputs and the rest of the front-end interface.
+
   const dropZone     = document.getElementById('dropZone');
   const fileInput    = document.getElementById('fileInput');
   const fileName     = document.getElementById('fileName');
@@ -165,22 +304,39 @@
     setStatus(`ready: ${file.name}`);
   }
 
+
+
+//TLDR: Record the damn mic and send the audio file to the back-end (made with glorious typescript)
+//The indentation is disgusting and atrocious I know but I try to make it neat and organized, I swear.
+
+
   recordBtn.addEventListener('click', async () => {
-    if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); return; }
+    if (mediaRecorder && mediaRecorder.state === 'recording') { 
+      mediaRecorder.stop(); 
+      return; 
+    }
+
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      recordingChunks = []; recSeconds = 0;
+      recordingChunks = []; 
+      recSeconds = 0;
       mediaRecorder = new MediaRecorder(stream);
       mediaRecorder.ondataavailable = e => recordingChunks.push(e.data);
       mediaRecorder.onstop = () => {
-        clearInterval(timerInterval); recTimer.textContent = '';
+        clearInterval(timerInterval); 
+        recTimer.textContent = '';
         stream.getTracks().forEach(t => t.stop());
-        recordBtn.textContent = '⏺ record mic'; recordBtn.classList.remove('recording');
+        recordBtn.textContent = '⏺ record mic'; 
+        recordBtn.classList.remove('recording');
         const blob = new Blob(recordingChunks, { type: 'audio/webm' });
         setFile(new File([blob], 'recording.webm', { type: 'audio/webm' }));
       };
+
+
       mediaRecorder.start();
-      recordBtn.textContent = '⏹ stop'; recordBtn.classList.add('recording');
+      recordBtn.textContent = '⏹ stop'; 
+      recordBtn.classList.add('recording');
       timerInterval = setInterval(() => {
         recSeconds++;
         const m = String(Math.floor(recSeconds / 60)).padStart(2,'0');
@@ -239,6 +395,8 @@
       submitBtn.disabled = false;
     }
   });
+
+
 </script>
 </body>
 </html>
