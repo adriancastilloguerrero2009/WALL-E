@@ -196,7 +196,7 @@ serve({
 //All that was buffers and blah blah blah I honestly don't even remember, it works, so dont touch it. I'm a college student that doesn't get paid for this I can't bother making it look pretty.
 
 
-console.log(`\n🎙  Voice pipeline running → http://localhost:${PORT}`);
-console.log(`(da robot)  Ollama model  : ${OLLAMA_MODEL}`);
-console.log(`(if you dont have this set up then it won't work)  Whisper binary: ${WHISPER_BIN}`);
-console.log(`Whisper model : ${WHISPER_MODEL}\n`);
+console.log(`\n🎙  Voice pipeline running → http://localhost:${PORT}\n`);
+console.log(`(MODEL)  Ollama model  : ${OLLAMA_MODEL}\n`);
+console.log(`(BINARY)  Whisper binary: ${WHISPER_BIN}\n`);
+console.log(`(MODEL)  Whisper model : ${WHISPER_MODEL}\n`);
