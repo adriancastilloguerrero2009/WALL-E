@@ -12,7 +12,7 @@ const OLLAMA_MODEL = "qwen2.5:3b"; // change to "llama3.2" or "qwen2.5:3b" if pr
 
 //This is just the MY path to where it's all installed, you can change it to wherever you want
 const WHISPER_BIN   = "C:\\whisper\\release\\whisper-cli.exe";
-const WHISPER_MODEL = "C:\\whisper\\release\\models\\ggml-base.en.bin";
+const WHISPER_MODEL = "C:\\whisper\\release\\models\\ggml-base.bin";
 
 //Note: I use the "base" model for faster transcriptions, but you can use other ones depending on your RAM
 
@@ -196,7 +196,7 @@ serve({
 //All that was buffers and blah blah blah I honestly don't even remember, it works, so dont touch it. I'm a college student that doesn't get paid for this I can't bother making it look pretty.
 
 
-console.log(`\n🎙  Voice pipeline running → http://localhost:${PORT}`);
-console.log(`(da robot)  Ollama model  : ${OLLAMA_MODEL}`);
-console.log(`(if you dont have this set up then it won't work)  Whisper binary: ${WHISPER_BIN}`);
-console.log(`Whisper model : ${WHISPER_MODEL}\n`);
+console.log(`\n🎙  Voice pipeline running → http://localhost:${PORT}\n`);
+console.log(`(MODEL)  Ollama model  : ${OLLAMA_MODEL}\n`);
+console.log(`(BINARY)  Whisper binary: ${WHISPER_BIN}\n`);
+console.log(`(MODEL)  Whisper model : ${WHISPER_MODEL}\n`);
