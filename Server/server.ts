@@ -154,6 +154,9 @@ serve({
         const buffer = Buffer.from(await file.arrayBuffer());
 
         // ─── SAVE AUDIO INPUT ──────────────────────────────────────────
+        // This saves the audio into a folder called "audioInputs" for debugging purposes.
+
+
         const audioDir = "./audioInputs";
         if (!existsSync(audioDir)) {
           require("fs").mkdirSync(audioDir, { recursive: true });
@@ -163,6 +166,8 @@ serve({
         const savedPath = `${audioDir}/input_${timestamp}.${ext}`;
         writeFileSync(savedPath, buffer);
         console.log(`💾 Audio saved: ${savedPath}`);
+
+
         // ───────────────────────────────────────────────────────────────
 
         const stream = new ReadableStream({
