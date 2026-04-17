@@ -153,6 +153,18 @@ serve({
 
         const buffer = Buffer.from(await file.arrayBuffer());
 
+        // ─── SAVE AUDIO INPUT ──────────────────────────────────────────
+        const audioDir = "./audioInputs";
+        if (!existsSync(audioDir)) {
+          require("fs").mkdirSync(audioDir, { recursive: true });
+        }
+        const timestamp = Date.now();
+        const ext = file.name.split(".").pop() || "wav";
+        const savedPath = `${audioDir}/input_${timestamp}.${ext}`;
+        writeFileSync(savedPath, buffer);
+        console.log(`💾 Audio saved: ${savedPath}`);
+        // ───────────────────────────────────────────────────────────────
+
         const stream = new ReadableStream({
           async start(controller) {
             const enc = new TextEncoder();
