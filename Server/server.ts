@@ -8,13 +8,27 @@ import { spawnSync } from "child_process";
 
 const PORT         = 3000;
 const OLLAMA_URL   = "http://localhost:11434/api/generate";
-const OLLAMA_MODEL = "qwen2.5:3b"; // change to "llama3.2" or "qwen2.5:3b" if preferred... although I think I'll import more models 
+const OLLAMA_MODEL = "qwen2.5:3b";
 
-//This is just the MY path to where it's all installed, you can change it to wherever you want
 const WHISPER_BIN   = "C:\\whisper\\release\\whisper-cli.exe";
 const WHISPER_MODEL = "C:\\whisper\\release\\models\\ggml-base.bin";
 
-//Note: I use the "base" model for faster transcriptions, but you can use other ones depending on your RAM
+
+// ─── Broadcast bus ─────────────────────────────────────────────────────────
+// Every browser tab that hits GET /events gets a controller added here.
+// When /process runs, it calls broadcast() and every tab receives the event.
+
+type BroadcastController = ReadableStreamDefaultController<Uint8Array>;
+const listeners = new Set<BroadcastController>();
+
+function broadcast(event: string, data: object) {
+  const enc     = new TextEncoder();
+  const payload = enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  for (const ctrl of listeners) {
+    try { ctrl.enqueue(payload); } catch { listeners.delete(ctrl); }
+  }
+}
+
 
 // ─── Audio conversion (webm/mp3/etc → 16-bit WAV) ──────────────────────────
 
@@ -24,13 +38,12 @@ function convertToWav(inputPath: string): string {
   const result = spawnSync("ffmpeg", [
     "-y",
     "-i", inputPath,
-    "-ar", "16000",     // whisper requires 16kHz
-    "-ac", "1",         // mono
+    "-ar", "16000",
+    "-ac", "1",
     "-c:a", "pcm_s16le",
     outputPath,
   ]);
 
-  //Throws error if ffmpeg fails, which helps with debugging
   if (result.status !== 0) {
     throw new Error(`ffmpeg failed: ${result.stderr?.toString()}`);
   }
@@ -40,16 +53,14 @@ function convertToWav(inputPath: string): string {
 
 
 // ─── Speech to Text ────────────────────────────────────────────────────────
-//Note: I set the language to Spanish ("-l", "es") since I speak Spanish, but you can change it
-//Another note: this is for the transcription part with whisper.cpp, the model you use for ollama might not understand your languages, so configure that first
+
 async function transcribeAudio(audioBuffer: Buffer, filename: string): Promise<string> {
-  const ext = filename.split(".").pop()?.toLowerCase() ?? "webm";
+  const ext      = filename.split(".").pop()?.toLowerCase() ?? "webm";
   const tempPath = `./temp_${Date.now()}.${ext}`;
-  let wavPath = tempPath;
+  let   wavPath  = tempPath;
 
   writeFileSync(tempPath, audioBuffer);
 
-  //tries to convert to .wav
   try {
     if (ext !== "wav") {
       wavPath = convertToWav(tempPath);
@@ -58,11 +69,10 @@ async function transcribeAudio(audioBuffer: Buffer, filename: string): Promise<s
     const result = spawnSync(WHISPER_BIN, [
       "-m", WHISPER_MODEL,
       "-f", wavPath,
-      "-l", "es",             // set language to Spanish (change if needed)
-      "-nt",            // no timestamps in output because it's annoying
+      "-l", "es",
+      "-nt",
     ]);
 
-    //You have failed.
     if (result.status !== 0) {
       throw new Error(`Whisper failed: ${result.stderr?.toString()}`);
     }
@@ -75,22 +85,18 @@ async function transcribeAudio(audioBuffer: Buffer, filename: string): Promise<s
   }
 }
 
-// ─── LLM streaming ─────────────────────────────────────────────────────────
-//TLDR: It looks unprofessional to sit there waiting for the the whole response to generate so this sends the tokens as they come, which is a lot nicer.
 
-//This obviously uses an async function (which I hate using because of the syntax) but basically it makes a POST request to the Ollama API
+// ─── LLM streaming ─────────────────────────────────────────────────────────
 
 async function* streamLLM(prompt: string): AsyncGenerator<string> {
   const res = await fetch(OLLAMA_URL, {
-    method: "POST",
+    method:  "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model: OLLAMA_MODEL, prompt, stream: true }),
+    body:    JSON.stringify({ model: OLLAMA_MODEL, prompt, stream: true }),
   });
 
-  //You have to run ollama first inside your terminal once you have everything setup, run "ollama serve" and LEAVE THE TERMINAL OPEN
-  
   if (!res.ok || !res.body) {
-    throw new Error(`Ollama error ${res.status} — make sure Ollama is installed and running`);
+    throw new Error(`Ollama error ${res.status} — make sure Ollama is running`);
   }
 
   const reader  = res.body.getReader();
@@ -111,6 +117,7 @@ async function* streamLLM(prompt: string): AsyncGenerator<string> {
   }
 }
 
+
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 function json(data: unknown, status = 200) {
@@ -130,8 +137,8 @@ function sse(stream: ReadableStream) {
   });
 }
 
+
 // ─── Server ────────────────────────────────────────────────────────────────
-//The worst part. 
 
 const website = Bun.file("./index.html");
 
@@ -141,10 +148,40 @@ serve({
   async fetch(req) {
     const url = new URL(req.url);
 
+    // ── Serve frontend ──────────────────────────────────────────────────────
     if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/index.html")) {
       return new Response(website, { headers: { "Content-Type": "text/html" } });
     }
 
+    // ── Browser subscribes here — stays open, receives all broadcasts ───────
+    if (req.method === "GET" && url.pathname === "/events") {
+      let controller: BroadcastController;
+
+      const stream = new ReadableStream<Uint8Array>({
+        start(ctrl) {
+          controller = ctrl;
+          listeners.add(ctrl);
+          console.log(`👁  Frontend connected  (${listeners.size} total)`);
+
+          // Send a heartbeat comment every 20s so the connection doesn't time out
+          const hb = setInterval(() => {
+            try { ctrl.enqueue(new TextEncoder().encode(": heartbeat\n\n")); }
+            catch { clearInterval(hb); }
+          }, 20_000);
+
+          // Clean up when the tab closes
+          req.signal.addEventListener("abort", () => {
+            clearInterval(hb);
+            listeners.delete(ctrl);
+            console.log(`👋 Frontend disconnected (${listeners.size} total)`);
+          });
+        },
+      });
+
+      return sse(stream);
+    }
+
+    // ── Main pipeline — runs when any client POSTs audio ───────────────────
     if (req.method === "POST" && url.pathname === "/process") {
       try {
         const form = await req.formData();
@@ -153,52 +190,41 @@ serve({
 
         const buffer = Buffer.from(await file.arrayBuffer());
 
-        // ─── SAVE AUDIO INPUT ──────────────────────────────────────────
-        // This saves the audio into a folder called "audioInputs" for debugging purposes.
-
-
+        // Save audio for debugging
         const audioDir = "./audioInputs";
         if (!existsSync(audioDir)) {
           require("fs").mkdirSync(audioDir, { recursive: true });
         }
         const timestamp = Date.now();
-        const ext = file.name.split(".").pop() || "wav";
+        const ext       = file.name.split(".").pop() || "wav";
         const savedPath = `${audioDir}/input_${timestamp}.${ext}`;
         writeFileSync(savedPath, buffer);
         console.log(`💾 Audio saved: ${savedPath}`);
 
+        // Run the pipeline in the background — don't await it so the POST
+        // caller gets a fast 202 and the browser tabs get the live stream.
+        (async () => {
+          try {
+            broadcast("status", { message: "Transcribiendo audio..." });
 
-        // ───────────────────────────────────────────────────────────────
+            const transcript = await transcribeAudio(buffer, file.name);
+            console.log("[STT]", transcript);
+            broadcast("transcript", { transcript });
 
-        const stream = new ReadableStream({
-          async start(controller) {
-            const enc = new TextEncoder();
-
-            const emit = (event: string, data: object) =>
-              controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
-
-            try {
-              emit("status", { message: "Transcribing audio..." });
-              const transcript = await transcribeAudio(buffer, file.name);
-              console.log("[STT]", transcript);
-              emit("transcript", { transcript });
-
-              emit("status", { message: "Generating response..." });
-              for await (const token of streamLLM(transcript)) {
-                emit("token", { token });
-              }
-
-              emit("done", {});
-            } catch (err) {
-              console.error("[pipeline error]", err);
-              emit("error", { message: String(err) });
-            } finally {
-              controller.close();
+            broadcast("status", { message: "Generando respuesta..." });
+            for await (const token of streamLLM(transcript)) {
+              broadcast("token", { token });
             }
-          },
-        });
 
-        return sse(stream);
+            broadcast("done", {});
+          } catch (err) {
+            console.error("[pipeline error]", err);
+            broadcast("error", { message: String(err) });
+          }
+        })();
+
+        // Return immediately to the caller (robot, curl, mobile app, etc.)
+        return json({ ok: true, message: "Pipeline started" }, 202);
 
       } catch (err) {
         console.error("[/process]", err);
@@ -210,10 +236,7 @@ serve({
   },
 });
 
-//All that was buffers and blah blah blah I honestly don't even remember, it works, so dont touch it. I'm a college student that doesn't get paid for this I can't bother making it look pretty.
-
-
 console.log(`\n🎙  Voice pipeline running → http://localhost:${PORT}\n`);
-console.log(`(MODEL)  Ollama model  : ${OLLAMA_MODEL}\n`);
-console.log(`(BINARY)  Whisper binary: ${WHISPER_BIN}\n`);
-console.log(`(MODEL)  Whisper model : ${WHISPER_MODEL}\n`);
+console.log(`(MODEL)   Ollama model  : ${OLLAMA_MODEL}`);
+console.log(`(BINARY)  Whisper binary: ${WHISPER_BIN}`);
+console.log(`(MODEL)   Whisper model : ${WHISPER_MODEL}\n`);
