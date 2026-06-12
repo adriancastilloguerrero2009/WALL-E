@@ -161,7 +161,7 @@ Available model sizes (trade-off between speed and accuracy):
 | `ggml-base.en.bin` | 142 MB | ✅ Recommended |
 | `ggml-small.en.bin` | 466 MB | 🐢 More accurate |
 
-> Remove `.en` from the model name (e.g. `ggml-base.bin`) if you need multilingual support. Also change `-l es` to `-l auto` in `server.ts` for automatic language detection.
+> Remove `.en` from the model name (e.g. `ggml-base.bin`) if you need multilingual support. Also change `-l es` to `-l auto` in `server.ts` for automatic language detection. If this still doesn't work, download the normal `ggml-base.bin` from the website and redirect the file to the models path, then modify the `server.ts` file.
 
 ---
 
